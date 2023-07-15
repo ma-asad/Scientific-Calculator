@@ -1,243 +1,409 @@
 import customtkinter as ck
+import math
+import sympy as sp
 
-WIDTH = 450
+
+# Constants for the GUI size
+WIDTH = 400
 HEIGHT = 600
 MAX_LENGTH = 16
-BUTTONWIDTH = 85
-BUTTONHEIGHT = 55
+BUTTONWIDTH = 80
+BUTTONHEIGHT = 50
+DROPDOWNWIDTH = 50
+DROPDOWNHEIGHT = 30
 
 
 class Calculator(ck.CTk):
     def __init__(self):
         super().__init__()
 
+        # GUI setup
+        self.function_buttons = []
         self.title("Calculator")
-        self.geometry("500x650")
+        self.geometry(f"{WIDTH}x{HEIGHT}")
         self.minsize(WIDTH, HEIGHT)
-        self.maxsize(WIDTH, HEIGHT)
 
-        self.bot_display_output = ck.CTkLabel(self, text="", font=("Arial", 40))
-        self.bot_display_output.place(relx=0.95, rely=0.15, anchor="e")
+        # Initialize states
+        self.second_state = False
+        self.trig_second_state = False
+        self.deg_states = ['DEG', 'RAD']
+        self.deg_index = 0
 
-        self.top_display_output = ck.CTkLabel(self, text="", font=("Arial", 30), text_color="grey")
-        self.top_display_output.place(relx=0.95, rely=0.07, anchor="e")
+        self.trig_menu_open = False
+        self.var_menu_open = False
+        self.trig_frame = None
+        self.var_frame = None
 
+        # Configure rows and columns for grid
+        for i in range(5):
+            self.grid_columnconfigure(i, weight=1)
+        for i in range(10):
+            self.grid_rowconfigure(i, weight=1)
 
+        # Display outputs
+        self.top_display_output = ck.CTkLabel(self, text="", font=("Arial", 15), text_color="grey", anchor="e")
+        self.top_display_output.grid(row=1, column=0, columnspan=7, sticky="nsew")
 
-        self.top_output = ""
+        self.bot_display_output = ck.CTkLabel(self, text="", font=("Arial", 35), anchor="e")
+        self.bot_display_output.grid(row=2, column=0, columnspan=7, sticky="nsew")
+
+        # Initialize the calculator state
+        self.top_output = " "
         self.bot_output = ""
+        self.evaluated_output = ""
+        self.last_str = " "
+        self.state_calc = ""
+        self.finish_input = False
         self.eval_expression = None
         self.dot_placed = False
 
-        self.button_0 = ck.CTkButton(self, text="0", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("0"))
-        self.button_1 = ck.CTkButton(self, text="1", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("1"))
-        self.button_2 = ck.CTkButton(self, text="2", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("2"))
-        self.button_3 = ck.CTkButton(self, text="3", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("3"))
-        self.button_4 = ck.CTkButton(self, text="4", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("4"))
-        self.button_5 = ck.CTkButton(self, text="5", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("5"))
-        self.button_6 = ck.CTkButton(self, text="6", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("6"))
-        self.button_7 = ck.CTkButton(self, text="7", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("7"))
-        self.button_8 = ck.CTkButton(self, text="8", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("8"))
-        self.button_9 = ck.CTkButton(self, text="9", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("9"))
-        self.button_dot = ck.CTkButton(self, text=".", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("."))
-        self.button_change_sign = ck.CTkButton(self, text="+/-", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                               command=lambda: self.ButtonPressed("+/-"))
-        self.button_plus = ck.CTkButton(self, text="+", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                        command=lambda: self.ButtonPressed("+"))
-        self.button_minus = ck.CTkButton(self, text="-", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                         command=lambda: self.ButtonPressed("-"))
-        self.button_multi = ck.CTkButton(self, text="x", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                         command=lambda: self.ButtonPressed("*"))
-        self.button_div = ck.CTkButton(self, text="/", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("/"))
-        self.button_equal = ck.CTkButton(self, text="=", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                         command=lambda: self.ButtonPressed("="))
-        self.button_bkspc = ck.CTkButton(self, text="←", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                         command=lambda: self.ButtonPressed("←"))
-        self.button_sqrt = ck.CTkButton(self, text="√x", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                        command=lambda: self.ButtonPressed("√x"))
-        self.button_C = ck.CTkButton(self, text="C", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("C"))
-        self.button_CE = ck.CTkButton(self, text="CE", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                      command=lambda: self.ButtonPressed("CE"))
-        self.button_sqr = ck.CTkButton(self, text="x²", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("x²"))
-        self.button_perc = ck.CTkButton(self, text="%", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                        command=lambda: self.ButtonPressed("%"))
-        self.button_inv = ck.CTkButton(self, text="1/x", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("1/x"))
+        # Define buttons according to the provided layout
+        self.define_buttons()
 
-        # scientific buttons
-        self.button_sin = ck.CTkButton(self, text="sin", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("sin"))
-        self.button_cos = ck.CTkButton(self, text="cos", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("cos"))
-        self.button_tan = ck.CTkButton(self, text="tan", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("tan"))
-        self.button_log = ck.CTkButton(self, text="log", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("log"))
-        self.button_ln = ck.CTkButton(self, text="ln", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                      command=lambda: self.ButtonPressed("ln"))
-        self.button_exp = ck.CTkButton(self, text="exp", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                       command=lambda: self.ButtonPressed("exp"))
-        self.button_factorial = ck.CTkButton(self, text="!", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                             command=lambda: self.ButtonPressed("!"))
-        self.button_pi = ck.CTkButton(self, text="π", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                      command=lambda: self.ButtonPressed("π"))
-        self.button_e = ck.CTkButton(self, text="e", width=BUTTONWIDTH, height=BUTTONHEIGHT,
-                                     command=lambda: self.ButtonPressed("e"))
+        # Place the buttons on the grid
+        self.place_buttons()
 
-        self.PlaceButtonSimple()
+    def define_buttons(self):
+        # Define the button properties
 
-        # # Create the sidebar
-        # self.sidebar = ck.CTkFrame(self, width=200)
-        # self.sidebar.pack(side=ck.LEFT, fill=ck.Y)
-        #
-        # # Add buttons to the sidebar
-        # self.standard_button = ck.CTkButton(self.sidebar, text='Standard', command=self.switch_to_standard)
-        # self.standard_button.pack(fill=ck.X)
-        # self.scientific_button = ck.CTkButton(self.sidebar, text='Scientific', command=self.switch_to_scientific)
-        # self.scientific_button.pack(fill=ck.X)
-        #
-        # # Hide the sidebar initially
-        # self.sidebar.pack_forget()
-        #
-        # # Create a hamburger button
-        # self.hamburger_button = ck.CTkButton(self, text='≡', command=self.toggle_sidebar)
-        # self.hamburger_button.pack(anchor=ck.NW)
-        #
-        # # Create a mode label
-        # self.mode_label = ck.CTkLabel(self, text='')
-        # self.mode_label.pack(anchor=ck.N)
+        self.button_trig = self.create_button("Trig")
+        self.button_var = self.create_button("Var")
 
-    def PlaceButtonSimple(self):
-        self.button_equal.place(relx=0.885, rely=0.90, anchor="center")
-        self.button_plus.place(relx=0.885, rely=0.80, anchor="center")
-        self.button_minus.place(relx=0.885, rely=0.70, anchor="center")
-        self.button_multi.place(relx=0.885, rely=0.60, anchor="center")
-        self.button_div.place(relx=0.885, rely=0.50, anchor="center")
-        self.button_bkspc.place(relx=0.885, rely=0.40, anchor="center")
+        self.button_2nd = self.create_button("2nd")
+        self.button_pi = self.create_button("π")
+        self.button_e = self.create_button("e")
+        self.button_C = self.create_button("C")
+        self.button_bkspc = self.create_button("←")
 
-        self.button_dot.place(relx=0.69, rely=0.90, anchor="center")
-        self.button_3.place(relx=0.69, rely=0.80, anchor="center")
-        self.button_6.place(relx=0.69, rely=0.70, anchor="center")
-        self.button_9.place(relx=0.69, rely=0.60, anchor="center")
-        self.button_sqrt.place(relx=0.69, rely=0.50, anchor="center")
-        self.button_C.place(relx=0.69, rely=0.40, anchor="center")
+        self.button_x2 = self.create_button("x²")
+        self.button_1_x = self.create_button("1/x")
+        self.button_pctg = self.create_button("%")
+        self.button_deg = self.create_button(self.deg_states[self.deg_index])
+        self.button_mod = self.create_button("mod")
 
-        self.button_0.place(relx=0.495, rely=0.90, anchor="center")
-        self.button_2.place(relx=0.495, rely=0.80, anchor="center")
-        self.button_5.place(relx=0.495, rely=0.70, anchor="center")
-        self.button_8.place(relx=0.495, rely=0.60, anchor="center")
-        self.button_sqr.place(relx=0.495, rely=0.50, anchor="center")
-        self.button_CE.place(relx=0.495, rely=0.40, anchor="center")
+        self.button_sqrt = self.create_button("√x")
+        self.button_lparen = self.create_button("(")
+        self.button_rparen = self.create_button(")")
+        self.button_fact = self.create_button("n!")
+        self.button_div = self.create_button("/")
 
-        self.button_change_sign.place(relx=0.3, rely=0.90, anchor="center")
-        self.button_1.place(relx=0.299, rely=0.80, anchor="center")
-        self.button_4.place(relx=0.299, rely=0.70, anchor="center")
-        self.button_7.place(relx=0.299, rely=0.60, anchor="center")
-        self.button_inv.place(relx=0.299, rely=0.50, anchor="center")
-        self.button_perc.place(relx=0.299, rely=0.40, anchor="center")
+        self.button_pc = self.create_button("nPr")
+        self.button_7 = self.create_button("7")
+        self.button_8 = self.create_button("8")
+        self.button_9 = self.create_button("9")
+        self.button_mul = self.create_button("*")
 
-        self.button_sin.place(relx=0.1, rely=0.2, anchor="center")
-        self.button_cos.place(relx=0.1, rely=0.3, anchor="center")
-        self.button_tan.place(relx=0.1, rely=0.4, anchor="center")
-        self.button_log.place(relx=0.1, rely=0.5, anchor="center")
-        self.button_ln.place(relx=0.1, rely=0.6, anchor="center")
-        self.button_exp.place(relx=0.1, rely=0.7, anchor="center")
-        self.button_factorial.place(relx=0.1, rely=0.8, anchor="center")
-        self.button_pi.place(relx=0.1, rely=0.9, anchor="center")
-        self.button_e.place(relx=0.1, rely=1.0, anchor="center")
+        self.button_exp = self.create_button("exp")
+        self.button_4 = self.create_button("4")
+        self.button_5 = self.create_button("5")
+        self.button_6 = self.create_button("6")
+        self.button_sub = self.create_button("-")
+
+        self.button_log = self.create_button("log")
+        self.button_1 = self.create_button("1")
+        self.button_2 = self.create_button("2")
+        self.button_3 = self.create_button("3")
+        self.button_add = self.create_button("+")
+
+        self.button_ln = self.create_button("ln")
+        self.button_pm = self.create_button("+/-")
+        self.button_0 = self.create_button("0")
+        self.button_dot = self.create_button(".")
+        self.button_equal = self.create_button("=")
 
         # Bind the Key event
         self.bind('<Key>', self.keyboard_input)
 
-    # def toggle_sidebar(self):
-    #     # This method is called when the hamburger button is clicked
-    #     if self.sidebar.winfo_viewable():
-    #         # If the sidebar is currently visible, hide it
-    #         self.sidebar.pack_forget()
-    #     else:
-    #         # If the sidebar is currently hidden, show it
-    #         self.sidebar.pack(side=ck.LEFT, fill=ck.Y)
+    def create_button(self, text):
+        # Helper function to create a button
+        return ck.CTkButton(self, text=text, width=BUTTONWIDTH, height=BUTTONHEIGHT,
+                            command=lambda: self.ButtonPressed(text), fg_color='#333332', hover_color='#474747')
 
-    # def switch_to_standard(self):
-    #     # This method is called when the 'Standard' button is clicked
-    #     self.mode_label['text'] = 'Standard'
-    #
-    # def switch_to_scientific(self):
-    #     # This method is called when the 'Scientific' button is clicked
-    #     self.mode_label['text'] = 'Scientific'
+    def create_num_button(self, text):
+        # Helper function to create a button
+        return ck.CTkButton(self, text=text, width=BUTTONWIDTH, height=BUTTONHEIGHT,
+                            command=lambda: self.ButtonPressed(text), fg_color='#474747', hover_color='#333332')
 
+    def place_buttons(self):
+        # Place the buttons on the grid
+        self.button_2nd.grid(row=4, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_pi.grid(row=4, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_e.grid(row=4, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_C.grid(row=4, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_bkspc.grid(row=4, column=4, sticky="nsew", padx=1, pady=1)
+
+        self.button_x2.grid(row=5, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_1_x.grid(row=5, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_pctg.grid(row=5, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_mod.grid(row=5, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_deg.grid(row=5, column=4, sticky="nsew", padx=1, pady=1)
+
+        self.button_sqrt.grid(row=6, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_lparen.grid(row=6, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_rparen.grid(row=6, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_fact.grid(row=6, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_div.grid(row=6, column=4, sticky="nsew", padx=1, pady=1)
+
+        self.button_pc.grid(row=7, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_7.grid(row=7, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_8.grid(row=7, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_9.grid(row=7, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_mul.grid(row=7, column=4, sticky="nsew", padx=1, pady=1)
+
+        self.button_exp.grid(row=8, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_4.grid(row=8, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_5.grid(row=8, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_6.grid(row=8, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_sub.grid(row=8, column=4, sticky="nsew", padx=1, pady=1)
+
+        self.button_log.grid(row=9, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_1.grid(row=9, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_2.grid(row=9, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_3.grid(row=9, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_add.grid(row=9, column=4, sticky="nsew", padx=1, pady=1)
+
+        self.button_ln.grid(row=10, column=0, sticky="nsew", padx=1, pady=1)
+        self.button_pm.grid(row=10, column=1, sticky="nsew", padx=1, pady=1)
+        self.button_0.grid(row=10, column=2, sticky="nsew", padx=1, pady=1)
+        self.button_dot.grid(row=10, column=3, sticky="nsew", padx=1, pady=1)
+        self.button_equal.grid(row=10, column=4, sticky="nsew", padx=1, pady=1)
+
+    # Fix issue with very large numbers eg(50000000000000000000000000000000)
+    # Fix issue with errors, 1/0, overflow errors etc
+    # Fix issue with 0.05 ^ 2 floating error
+    # Fix issue with doing 5 E 10 + 5 E 10 < issue occurs with all self.calc_state math functions ლ(╹◡╹ლ)
+    # Threading (✿◡‿◡)
     def ButtonPressed(self, value):
-        if value == "1" or value == "2" or value == "3" or value == "4" or value == "5" or value == "6" or value == "7" \
-                or value == "8" or value == "9" or value == "0":
+        # if user inputs a digit
+        if value in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'π', 'e']:
 
-            if len(self.bot_output) <= 15:
-                self.bot_output += value
-                self.DisplayBottomText()
+            if len(self.bot_output) < 16:
+                if value == "π":
+                    self.bot_output = str(math.pi)
+                elif value == "e":
+                    self.bot_output = str(math.e)
+                else:
+                    self.bot_output = self.bot_output + value
 
-        elif value == "+" or value == "*" or value == "-" or value == "/":
-            if len(self.top_output) > 0:
-                temp_num = self.top_output[len(self.top_output) - 1]
+            self.DisplayBottomText()
+            self.evaluated_output = self.bot_output
+
+        elif self.CheckSign(value) and self.evaluated_output != " ":
+            self.dot_placed = False
+            last_value = self.top_output[-1]
+            if last_value == "+" or last_value == "-" or last_value == "*" or last_value == "/":
+
+                self.top_output = self.top_output.replace(last_value, value)
+
             else:
-                temp_num = None
-            if temp_num == "+" or temp_num == "-" or temp_num == "/" or temp_num == "x":
-                self.top_output = self.top_output[:-1] + value
-                self.bot_output = ""
-                self.DisplayUpperText()
-            else:
-                self.top_output = self.bot_output + " " + value
-                self.bot_output = ""
-                self.DisplayUpperText()
-        elif value == "C":
+                self.top_output = self.evaluated_output + " " + value
+
             self.bot_output = ""
-            self.top_output = ""
             self.DisplayBottomText()
             self.DisplayUpperText()
-        elif value == "CE":
+        elif value == "2nd":
+            # Toggle the '2nd' state
+            self.second_state = not self.second_state
+            # Update the functionalities of the affected buttons
+            self.update_second_state()
+        elif value == "C":
+            self.evaluated_output = " "
             self.bot_output = ""
+            self.top_output = " "
+            self.state_calc = ""
+            self.dot_placed = False
+            self.finish_input = False
+            self.DisplayUpperText()
             self.DisplayBottomText()
-        elif value == "←" and len(self.bot_output) > 0:
-            if self.bot_output[len(self.bot_output) - 1] == ".":
+        # elif value == "CE":
+        #     self.bot_output = ""
+        #     self.DisplayBottomText()
+        elif value == "←" and self.evaluated_output != "":
+            if self.evaluated_output[-1] == ".":
                 self.dot_placed = False
-            self.bot_output = self.bot_output[:-1]
+
+            self.evaluated_output = self.evaluated_output[0: len(self.evaluated_output) - 1]
+            self.bot_output = self.evaluated_output
             self.DisplayBottomText()
         elif value == "." and self.dot_placed is False:
             self.dot_placed = True
-            self.bot_output = self.bot_output + "."
+            self.evaluated_output = self.evaluated_output + "."
+            self.bot_output = self.evaluated_output
             self.DisplayBottomText()
         elif value == "+/-" and len(self.bot_output) > 0 and self.bot_output[0] == "-":
-            self.bot_output = self.bot_output[1:]
+            self.evaluated_output = self.evaluated_output[1:]
+            self.bot_output = self.evaluated_output
             self.DisplayBottomText()
         elif value == "+/-":
-            self.bot_output = "-" + self.bot_output
+            self.evaluated_output = "-" + self.evaluated_output
+            self.bot_output = self.evaluated_output
             self.DisplayBottomText()
-        elif value == "=":
-            self.EvaluateExpression()
+        elif value == "=" and self.bot_output != " " and self.top_output != " ":
+            if self.state_calc == "":
+                self.CalculateUpBot()
+            else:
+                self.finish_input = True
+        elif len(self.evaluated_output) > 0:
+            if value == "1/x":
+                eq = f"1/float(self.evaluated_output)"
+                self.TransformNumber(eq, "1/")
+            elif value == "x²":
+                eq = f"math.pow(float(self.evaluated_output),2)"
+                self.TransformNumber(eq, "^ 2")
+            elif value == "√x":
+                eq = f"math.sqrt(float(self.evaluated_output))"
+                self.TransformNumber(eq, "sqrt(")
+            elif value == "log":
+                eq = f"math.log10(float(self.evaluated_output))"
+                self.TransformNumber(eq, "log")
+            elif value == "ln":
+                eq = f"math.log(float(self.evaluated_output))"
+                self.TransformNumber(eq, "ln")
+            elif value == "%":
+                eq = f"float(self.evaluated_output)/ 100"
+                self.TransformNumber(eq, "%")
+            elif value == "n!":
+                if '.' not in self.evaluated_output:
+                    eq = f"math.factorial(int(self.evaluated_output))"
+                    self.TransformNumber(eq, "!")
+            elif value == "exp":
+                self.top_output = self.evaluated_output + " E"
+                self.DisplayUpperText()
+                self.top_output = self.evaluated_output
+                self.evaluated_output = ""
+                self.bot_output = ""
+                self.state_calc = "exp"
 
-            # Bind the Key event
-            self.bind('<Key>', self.keyboard_input)
+            elif value == "mod":
+                self.top_output = self.evaluated_output + " mod "
+                self.DisplayUpperText()
+                self.top_output = self.evaluated_output
+                self.evaluated_output = ""
+                self.bot_output = ""
+                self.state_calc = "mod"
 
-    # allow user to use keyboard
+            elif value == "nPr":
+                self.top_output = self.evaluated_output + "P"
+                self.DisplayUpperText()
+                self.top_output = self.evaluated_output
+                self.evaluated_output = ""
+                self.bot_output = ""
+                self.state_calc = "nPr"
+
+        if self.evaluated_output != "" and self.finish_input:
+            if self.state_calc == "mod":
+                eq = f"float(self.top_output) % float(self.evaluated_output)"
+                self.TransformNumber(eq, "mod")
+                self.top_output = " "
+            elif self.state_calc == "exp":
+                if "." not in self.evaluated_output:
+                    eq = f"float(self.top_output) * math.pow(10, int(self.evaluated_output))"
+                    self.TransformNumber(eq, "E")
+                    self.top_output = " "
+                else:
+                    self.finish_input = False
+            elif self.state_calc == "nPr":
+                if "." not in self.evaluated_output and "." not in self.top_output:
+                    eq = f"math.perm(int(self.top_output), int(self.evaluated_output))"
+                    self.TransformNumber(eq, "P")
+                    self.top_output = " "
+                else:
+                    self.finish_input = False
+
+    def TransformNumber(self, eq, value):
+        self.state_calc = ""
+        self.finish_input = False
+        self.dot_placed = False
+        if self.NumBefore(value):
+            top_value = self.evaluated_output + " " + value
+        elif self.NumBefAft(value):
+            top_value = self.top_output + " " + value + " " + self.evaluated_output
+        else:
+            top_value = value + " " + self.evaluated_output
+
+        if value[-1] == "(":
+            top_value = top_value + " )"
+
+        evaluated_value = str(eval(eq))
+
+        if self.CheckSign(self.top_output[-1]):
+            final_eq = self.top_output + " " + evaluated_value
+            self.top_output = self.top_output + " " + top_value
+            self.evaluated_output = str(eval(final_eq))
+        else:
+            self.top_output = top_value
+            self.evaluated_output = evaluated_value
+
+        string = self.evaluated_output
+        without_trailing_zeros = string.rstrip(
+            '0').rstrip('.') if '.' in string else string
+
+        self.bot_output = without_trailing_zeros
+
+        self.DisplayUpperText()
+        self.DisplayBottomText()
+        self.bot_output = ""
+
+    def NumBefAft(self, value):
+        if value in ["mod", "E", "P"]:
+            return True
+        return False
+
+    def NumBefore(self, value):
+        if value in ["^ 2", "%", "!"]:
+            return True
+        return False
+
+    def CalculateUpBot(self):
+        expression = self.top_output + " " + self.bot_output
+        eval_expression = sp.sympify(self.top_output + self.bot_output)
+        self.top_output = expression + " ="
+        string = str(eval_expression)
+        without_trailing_zeros = string.rstrip(
+            '0').rstrip('.') if '.' in string else string
+        self.evaluated_output = without_trailing_zeros
+        self.bot_output = self.evaluated_output
+
+        self.bot_output = without_trailing_zeros
+        self.DisplayBottomText()
+        self.DisplayUpperText()
+
+        self.top_output = " "
+        self.bot_output = ""
+
+    def PrintAll(self):
+        print(self.bot_output)
+        print(self.top_output)
+        print(self.evaluated_output)
+
+    def CheckSign(self, value):
+        if value == "+" or value == "*" or value == "-" or value == "/":
+            return True
+        return False
+
+    def CheckEquation(self):
+        if self.CheckSign(self.top_output[-1]):
+            return True
+        return False
+
+    def DisplayBottomText(self):
+        self.bot_display_output.configure(text=self.bot_output)
+
+    def DisplayUpperText(self):
+        self.top_display_output.configure(text=self.top_output)
+
+    def test(self):
+        pass
+
     def keyboard_input(self, event):
 
         if event.char in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "+", "*", "-", "/", ".", "\\r", "\\x08"]:
             self.ButtonPressed(event.char)
+
         # if event.char == "1" or event.char == "2" or event.char == "3" or event.char == "4" or event.char == "5" \
         #         or event.char == "6" or event.char == "7" or event.char == "8" or event.char == "9" or event.char == "0":
         #     self.ButtonPressed(event.char)
+
         elif event.char == "+" or event.char == "*" or event.char == "-" or event.char == "/":
             self.ButtonPressed(event.char)
         elif event.char == ".":
@@ -247,26 +413,38 @@ class Calculator(ck.CTk):
         elif event.char == "\x08":
             self.ButtonPressed("←")
 
-    def DisplayBottomText(self):
-        self.bot_display_output.configure(text=self.bot_output)
+    def toggle_second(self):
+        # Toggle the '2nd' state
+        self.second_state = not self.second_state
 
-    def DisplayUpperText(self):
-        self.top_display_output.configure(text=self.top_output)
+        # Update the functionalities of the affected buttons
+        self.update_second_state()
 
-    def EvaluateExpression(self):
-        output = self.top_output + " " + self.bot_output
-        eval_output = eval(output)
-        self.top_output = str(eval_output)
-        self.top_display_output.configure(text=output + " =")
-        self.bot_display_output.configure(text=eval_output)
+    def update_second_state(self):
+        # Update the functionalities of the affected buttons based on the '2nd' state
+        if self.second_state:
+            # Change the button texts to their '2nd' mode functions
+            self.button_x2.configure(text='x^y')
+            self.button_sqrt.configure(text='y√x')
+            self.button_pc.configure(text='nCr')
+            self.button_exp.configure(text='2^x')
+            self.button_log.configure(text='log_y')
+            self.button_ln.configure(text='e^x')
 
-    def test(self):
-        pass
+        else:
+            # Change the button texts back to their normal mode functions
+            self.button_x2.configure(text='x²')
+            self.button_sqrt.configure(text='√x')
+            self.button_pc.configure(text='nPr')
+            self.button_exp.configure(text='exp')
+            self.button_log.configure(text='log')
+            self.button_ln.configure(text='ln')
 
 
-def Main():
+# Create an instance of the Calculator class and start the GUI
+def main():
     new_app = Calculator()
     new_app.mainloop()
 
 
-Main()
+main()
