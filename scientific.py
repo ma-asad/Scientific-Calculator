@@ -68,11 +68,6 @@ class Calculator(ck.CTk):
     def define_buttons(self):
         # Define the button properties
 
-        # self.button_trig = ck.CTkButton(self, text="Trig", width=BUTTONWIDTH, height=40,
-        #                                 command=lambda: self.ButtonPressed("Trig"), fg_color='#21211f', hover_color='#474747')
-        # self.button_var = ck.CTkButton(self, text="Var", width=BUTTONWIDTH, height=40,
-        #                                command=lambda: self.ButtonPressed("Var"), fg_color='#21211f', hover_color='#474747')
-
         self.button_2nd = self.create_button("2nd")
         self.button_pi = self.create_button("π")
         self.button_e = self.create_button("e")
@@ -130,9 +125,6 @@ class Calculator(ck.CTk):
 
     def place_buttons(self):
         # Place the buttons on the grid
-
-        # self.button_trig.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=1, pady=1)
-        # self.button_var.grid(row=3, column=2, columnspan=2, sticky="nsew", padx=1, pady=1)
 
         self.button_2nd.grid(row=4, column=0, sticky="nsew", padx=1, pady=1)
         self.button_pi.grid(row=4, column=1, sticky="nsew", padx=1, pady=1)
@@ -343,87 +335,6 @@ class Calculator(ck.CTk):
             self.button_log.configure(text='log')
             self.button_ln.configure(text='ln')
 
-
-
-    # def trig_update_second_state(self):
-    #     # Update the functionalities of the trigonometry buttons based on the '2nd' state
-    #     if self.trig_second_state:
-    #         # Change the button texts to their inverse functions
-    #         self.button_sin.configure(text='sin^-1')
-    #         self.button_cos.configure(text='cos^-1')
-    #         # Continue for the other trigonometric functions
-    #     else:
-    #         # Change the button texts back to their normal mode functions
-    #         self.button_sin.configure(text='sin')
-    #         self.button_cos.configure(text='cos')
-    #         # Continue for the other trigonometric functions
-
-    # def show_trig_menu(self):
-    #     if self.trig_menu_open:
-    #         # Destroy the frame and set the state to False
-    #         self.trig_frame.destroy()
-    #         self.trig_menu_open = False
-    #     else:
-    #         # Create a new Frame widget
-    #         self.trig_frame = ck.CTkFrame(self, fg_color='white')
-    #
-    #         # Define the new function buttons within this frame
-    #         self.button_second = ck.CTkButton(self.trig_frame, text='2nd', width=DROPDOWNWIDTH, height=DROPDOWNHEIGHT,
-    #                                           command=self.toggle_trig_second, fg_color='grey')
-    #         self.button_sin = ck.CTkButton(self.trig_frame, text='sin', width=DROPDOWNWIDTH, height=DROPDOWNHEIGHT,
-    #                                        command=lambda: self.ButtonPressed('sin'), fg_color='grey')
-    #         self.button_cos = ck.CTkButton(self.trig_frame, text='cos', width=DROPDOWNWIDTH, height=DROPDOWNHEIGHT,
-    #                                        command=lambda: self.ButtonPressed('cos'), fg_color='grey')
-    #         # TODO: Continue for the other trigonometric functions
-    #
-    #         # Place the new function buttons on the grid within the frame
-    #         self.button_second.grid(row=0, column=0, sticky="nsew", padx=1, pady=1)
-    #         self.button_sin.grid(row=0, column=1, sticky="nsew", padx=1, pady=1)
-    #         self.button_cos.grid(row=0, column=2, sticky="nsew", padx=1, pady=1)
-    #
-    #         # TODO: Continue for the other trigonometric functions
-    #
-    #         # Place the frame over the existing grid
-    #         self.trig_frame.place(x=self.button_trig.winfo_x(),
-    #                               y=self.button_trig.winfo_y() + 30)
-    #
-    #         # Set the state to True
-    #         self.trig_menu_open = True
-
-    # def toggle_trig_second(self):
-    #     # Toggle the '2nd' state for the trigonometry functions
-    #     self.trig_second_state = not self.trig_second_state
-    #
-    #     # Update the functionalities of the affected buttons
-    #     self.trig_update_second_state()
-    #
-    # def show_var_menu(self):
-    #     if self.var_menu_open:
-    #         # Destroy the frame and set the state to False
-    #         self.var_frame.destroy()
-    #         self.var_menu_open = False
-    #     else:
-    #         # Create a new Frame widget
-    #         self.var_frame = ck.CTkFrame(self, fg_color='white')
-    #
-    #         # Define the new function buttons within this frame
-    #         button_a = ck.CTkButton(self.var_frame, text='a', width=DROPDOWNWIDTH, height=DROPDOWNHEIGHT,
-    #                                 command=lambda: self.ButtonPressed('a'), fg_color='grey')
-    #         button_b = ck.CTkButton(self.var_frame, text='b', width=DROPDOWNWIDTH, height=DROPDOWNHEIGHT,
-    #                                 command=lambda: self.ButtonPressed('b'), fg_color='grey')
-    #         # TODO: Continue for the other functions
-    #
-    #         # Place the new function buttons on the grid within the frame
-    #         button_a.grid(row=0, column=0, sticky="nsew", padx=1, pady=1)
-    #         button_b.grid(row=0, column=1, sticky="nsew", padx=1, pady=1)
-    #         # TODO: Continue for the other functions
-    #
-    #         # Place the frame over the existing grid
-    #         self.var_frame.place(x=self.button_var.winfo_x(),
-    #                              y=self.button_var.winfo_y() + 30)
-    #
-    #         # Set the state to True
-    #         self.var_menu_open = True
 
     def DisplayBottomText(self):
         self.bot_display_output.configure(text=self.bot_output)
