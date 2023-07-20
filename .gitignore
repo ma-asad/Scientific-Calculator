@@ -1,2 +1,7 @@
 .idea/*
 /venv/*
+/build/*
+sci_calc.py
+calc_test.py
+README.docx
+/src/__pycache__/*
