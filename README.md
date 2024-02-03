@@ -4,6 +4,8 @@
 ## Description
 This is a fully featured scientific calculator written in Python using the CustomTkinter GUI. The calculator is designed to handle a wide range of mathematical operations, from basic arithmetic to scientific functions.
 
+This project has been completed as part of the Middlesex University CST1500 Coursework 3. 
+
 ## Features
 
 - Basic arithmetic operations: Addition, Subtraction, Multiplication, Division
@@ -49,3 +51,9 @@ The code includes three main classes:
 - `Keyboard`: This class allows for interaction with the calculator using the keyboard. It binds keyboard keys to their corresponding calculator functions.
 
 Each of these classes has a number of methods to perform their respective tasks. For more detailed information, refer to the comments and docstrings in the code.
+
+## Authors
+
+The authors of this project are:
+- Mohammad Asad Atterkhan
+- Hemant Mooneea
