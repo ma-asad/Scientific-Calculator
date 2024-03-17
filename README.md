@@ -39,7 +39,7 @@ pyinstaller --onefile sci_calc.py
 This will create a standalone executable(.exe) file in the `dist` folder.
 ## Usage
 
-Run the compiled executable or the Python script directly. Use the calculator GUI to perform operations, or use your keyboard to input numbers and operators.
+Run the compiled executable or the Python script directly. Use the calculator GUI to perform operations, or use a keyboard to input numbers and operators.
 ## Classes
 
 The code includes three main classes:
